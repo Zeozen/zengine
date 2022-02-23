@@ -90,6 +90,7 @@ typedef struct ZSDL_Font
 
 void DrawTextWorld(Viewport* viewport, zFont* font, SDL_Color color, r2 pos, r32 depth, const char* text);
 void DrawTextScreenCentered(Viewport* viewport, zFont* font, SDL_Color color, SDL_Rect dst, const char* text);
+void DrawTextScreen(Viewport* viewport, zFont* font, SDL_Color color, i2 loc, const char* text);
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^ FONT ^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 
 /*vvvvvvvvvvvvvvvvvvvvvvvvvv ASSETBANK vvvvvvvvvvvvvvvvvvvvvvvvvv*/
@@ -122,6 +123,7 @@ void GenerateString(Assets* assets, i32 identifier, const char* string);
 void LoadTexture(Assets* assets, i32 identifier, SDL_Renderer* renderer, const char* path);
 void LoadCursor(Assets* assets, i32 identifier, const char* path);
 void LoadFont(Assets* assets, i32 identifier, SDL_Renderer* renderer, const char* path);
+void MixSFX();
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^ ASSETBANK ^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 
 
@@ -379,6 +381,8 @@ r2 CamToPos(i2 cam, Viewport* viewport);
 #define COLOR_PURPLE COLOR(0xff, 0x00, 0xff, 0xff)
 #define COLOR_BLACK COLOR(0x00, 0x00, 0x00, 0xff)
 #define COLOR_WHITE COLOR(0xff, 0xff, 0xff, 0xff)
+#define COLOR_WHITE_TRANSPARENT COLOR(0xff, 0xff, 0xff, 0x00)
+#define COLOR_BLACK_TRANSPARENT COLOR(0xff, 0xff, 0xff, 0x00)
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^ RENDER SUPPORT FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 
 /*vvvvvvvvvvvvvvvvvvvvvvvvvv ANALYSIS FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvv*/

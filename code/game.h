@@ -2,8 +2,6 @@
 #define GAME_H
 
 #include "zmath.h"
-#include "zgrid.h"
-#include "zsdl.h"
 
 
 
@@ -27,6 +25,8 @@ typedef struct
 {
     u8 data[GAMEDATA_MAX];
 } Game;
+
+
 
 
 

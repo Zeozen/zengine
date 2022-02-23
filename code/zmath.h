@@ -29,8 +29,10 @@
 #define COS_PI_SIXTHS 0.866f
 #define SIN_PI_SIXTHS 0.5f
 
-#define WORLD_UNIT 8
-#define WORLD_UNIT_F 8.f
+#define WORLD_UNIT 16
+#define WORLD_HALFUNIT 8
+#define WORLD_UNIT_F 16.f
+#define WORLD_HALFUNIT_F 8.f
 
 
 

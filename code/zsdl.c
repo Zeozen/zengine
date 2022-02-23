@@ -496,6 +496,13 @@ void LoadFont(Assets* assets, i32 identifier, SDL_Renderer* renderer, const char
 	}
 }
 
+void MixSFX()
+{
+	for (i32 i = 0; i < ASSETBANK_SOUNDS_MAX; i++)
+		Mix_Volume(i, MIX_MAX_VOLUME/2);
+	Mix_VolumeMusic(255);
+
+}
 
 
 
@@ -1471,6 +1478,37 @@ void DrawTextScreenCentered(Viewport* viewport, zFont* font, SDL_Color color, SD
 		_dst.y = screen_pos.y;//+ i * font->siz.y + font->spacing.y;
 
         SDL_RenderCopy(viewport->renderer, font->glyphs, &src, &_dst);
+        i++;
+    }
+}
+
+void DrawTextScreen(Viewport* viewport, zFont* font, SDL_Color color, i2 loc, const char* text)
+{
+	i32 i = 0;
+	i32 l = 0;
+	i32 c = 0;
+	i2 screen_pos = loc;
+	SDL_Rect src = {0, 0, font->siz.x, font->siz.y};
+	SDL_Rect _dst = {loc.x, loc.y, font->siz.x, font->siz.y};
+	SDL_SetTextureColorMod(font->glyphs, color.r, color.g, color.b);
+	while(text[i] != '\0')
+    {
+		if (text[i] == '}')
+		{
+			l++;
+			c = 0;
+		}
+        else 
+		{
+			i32 glyph_idx = text[i] - ZFONT_ASCII_OFFSET;
+			src.x = (glyph_idx % ZFONT_DEFAULT_MAX_COL) * font->siz.x;
+			src.y = (glyph_idx / ZFONT_DEFAULT_MAX_COL) * font->siz.y;
+			_dst.x = screen_pos.x + c * font->siz.x + font->spacing.x;
+			_dst.y = screen_pos.y + (l * (font->siz.y + font->spacing.y));
+
+        	SDL_RenderCopy(viewport->renderer, font->glyphs, &src, &_dst);
+			c++;
+		}
         i++;
     }
 }

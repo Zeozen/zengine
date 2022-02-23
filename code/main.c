@@ -1,9 +1,10 @@
 #include <stdio.h>
-#include "assets.h"
-#include "game.h"
+// #include "assets.h"
+// #include "game.h"
 #include "update.h"
 #include "render.h"
-#include "zsdl.h"
+#include "zengine.h"
+// #include "zsdl.h"
 
 #ifdef __EMSCRIPTEN__
 #include "emscripten.h"
@@ -12,23 +13,11 @@
 #define DT_MS 10
 #define DT_SEC 0.01f
 
-typedef struct
-{
-	Viewport* viewport;
-	Game* game;
-	Controller* controller;
-	Assets* assets;
-	Particles* particles;
-	Menu* menus;
-	Gamestate gamestate_old;
-	Gamestate gamestate_now;
-	Gamestate gamestate_new;
-	u32 t_0_gamestate_change;
-} Engine;
+
 
 void mainloop(void *arg)
 {
-	Engine* engine = (Engine*)(arg);
+	zEngine* z = (zEngine*)(arg);
 	static u32 current_time = 0;
 	static u32 time_accumulator = 0;
 	static u32 t = 0;
@@ -47,26 +36,26 @@ void mainloop(void *arg)
 /* LOGIC UPDATE IN FIXED TIMESTEPS */
 		while (time_accumulator >= DT_MS)
 		{
-			engine->gamestate_old = engine->gamestate_now;
-			CollectInput(engine->controller);
+			z->gamestate_old = z->gamestate_now;
+			CollectInput(z->controller);
 			
 
-			if (ActionPressed(engine->controller, A_RSIZ))
+			if (ActionPressed(z->controller, A_RSIZ))
 			{
-				ComputePixelScale(engine->viewport);
-				CalculateScreen(engine->viewport);
-				RefreshCursors(engine->viewport, engine->assets);
+				ComputePixelScale(z->viewport);
+				CalculateScreen(z->viewport);
+				RefreshCursors(z->viewport, z->assets);
 			}
-			if (ActionPressed(engine->controller, A_FSCR))
+			if (ActionPressed(z->controller, A_FSCR))
 			{
-				ToggleFullscreen(engine->viewport);
-				ComputePixelScale(engine->viewport);
-				CalculateScreen(engine->viewport);
-				RefreshCursors(engine->viewport, engine->assets);
+				ToggleFullscreen(z->viewport);
+				ComputePixelScale(z->viewport);
+				CalculateScreen(z->viewport);
+				RefreshCursors(z->viewport, z->assets);
 			}
 			
 /* TRANSITION GAMESTATE BEGIN */
-		    if (engine->gamestate_now != engine->gamestate_new)
+		    if (z->gamestate_now != z->gamestate_new)
     		{
    				static b8 transition_allowed[NUMBER_OF_GAMESTATES*NUMBER_OF_GAMESTATES] = 
     			{ //FROM	init    main    opts	play	event,  lose	vict	edit	exit	  TO
@@ -81,22 +70,22 @@ void mainloop(void *arg)
                 			0,      1,      1,		1,  	1,      1,      1,      1,		1		//exit
     			};
 
-    			if (transition_allowed[engine->gamestate_now + engine->gamestate_new * NUMBER_OF_GAMESTATES])
+    			if (transition_allowed[z->gamestate_now + z->gamestate_new * NUMBER_OF_GAMESTATES])
 	    		{
 
 /*	exit and cleanup current state	*/
 #if DEBUGPRNT
-printf("Game exiting state \t%s...\n", GetGamestateName(engine->gamestate_now));
+printf("Game exiting state \t%s...\n", GetGamestateName(z->gamestate_now));
 #endif
-	        		switch (engine->gamestate_now) 
+	        		switch (z->gamestate_now) 
 	        		{
 	            		case GAMESTATE_INIT:
 						break;
 	            		case GAMESTATE_MAIN:
-							ToggleMenu(&engine->menus[MENU_TITLE], ZDISABLED);
+							ToggleMenu(&z->menus[MENU_TITLE], ZDISABLED);
 						break;
 	            		case GAMESTATE_OPTS:
-							ToggleMenu(&engine->menus[MENU_OPTIONS], ZDISABLED);
+							ToggleMenu(&z->menus[MENU_OPTIONS], ZDISABLED);
 						break;
 	            		case GAMESTATE_PLAY:
 						break;
@@ -111,22 +100,22 @@ printf("Game exiting state \t%s...\n", GetGamestateName(engine->gamestate_now));
 	            		case GAMESTATE_EXIT:
 						break;
 	        		}
-					engine->gamestate_old = engine->gamestate_now;
+					z->gamestate_old = z->gamestate_now;
 
 /*	enter and setup next state	*/
 #if DEBUGPRNT
-printf("Game entering state \t%s...\n", GetGamestateName(engine->gamestate_new));
+printf("Game entering state \t%s...\n", GetGamestateName(z->gamestate_new));
 #endif
-	        		switch (engine->gamestate_new) 
+	        		switch (z->gamestate_new) 
 	        		{
 	            		case GAMESTATE_INIT:
-							engine->viewport->camera->zoom = ZSDL_CAMERA_MIN_ZOOM;
+							z->viewport->camera->zoom = ZSDL_CAMERA_MIN_ZOOM;
 						break;
 	            		case GAMESTATE_MAIN:
-							ToggleMenu(&engine->menus[MENU_TITLE], ZENABLED);
+							ToggleMenu(&z->menus[MENU_TITLE], ZENABLED);
 						break;
 	            		case GAMESTATE_OPTS:
-							ToggleMenu(&engine->menus[MENU_OPTIONS], ZENABLED);
+							ToggleMenu(&z->menus[MENU_OPTIONS], ZENABLED);
 						break;						
 	            		case GAMESTATE_PLAY:
 						break;
@@ -144,97 +133,55 @@ printf("Game entering state \t%s...\n", GetGamestateName(engine->gamestate_new))
 #if DEBUGPRNT
 printf("Gamestate change complete.\n");
 #endif
-					engine->gamestate_now = engine->gamestate_new;
-					engine->t_0_gamestate_change = t;
+					z->gamestate_now = z->gamestate_new;
+					z->t_0_gamestate_change = t;
 	    		} // end if transition allowed
 	    		else //keep current state, but push back and update old state
 	    		{
-					engine->gamestate_old = engine->gamestate_now;
+					z->gamestate_old = z->gamestate_now;
 #if DEBUGPRNT
-printf("Gamestate change from %s \tto %s was deemed illegal!\n", GetGamestateName(engine->gamestate_now), GetGamestateName(engine->gamestate_new));
+printf("Gamestate change from %s \tto %s was deemed illegal!\n", GetGamestateName(z->gamestate_now), GetGamestateName(z->gamestate_new));
 #endif
 	    		}
 			}
 /* TRANSITION GAMESTATE END */
 
 /* PERFORM STATE LOGIC UPDATE */
-			switch (engine->gamestate_now)
-			{
-	            case GAMESTATE_INIT:
-					engine->gamestate_new = GAMESTATE_MAIN;
-	                break;
-	            case GAMESTATE_MAIN:
-					engine->gamestate_new = UpdateMain(t, DT_SEC, engine->t_0_gamestate_change, engine->viewport, engine->game, engine->controller, engine->particles, engine->assets, engine->menus);
-	                break;
-				case GAMESTATE_OPTS:
-					engine->gamestate_new = UpdateOpts(t, DT_SEC, engine->t_0_gamestate_change, engine->viewport, engine->game, engine->controller, engine->particles, engine->assets, engine->menus);
-				break;					
-	            case GAMESTATE_PLAY:
-					engine->gamestate_new = UpdatePlay(t, DT_SEC, engine->t_0_gamestate_change, engine->viewport, engine->game, engine->controller, engine->particles, engine->assets, engine->menus);
-	                break;
-	            case GAMESTATE_EVNT:
-	                break;
-	            case GAMESTATE_LOSE:
-					engine->gamestate_new = UpdateLose(t, DT_SEC, engine->t_0_gamestate_change, engine->viewport, engine->game, engine->controller, engine->particles, engine->assets, engine->menus);
-	                break;
-	            case GAMESTATE_GOAL:
-#if DEBUGPRNT
-printf("Gamestate entered state it shouldn't be in: %s \tto %s !\n", GetGamestateName(engine->gamestate_old), GetGamestateName(engine->gamestate_now));
-#endif					
-					engine->gamestate_new = GAMESTATE_EXIT;
-	                break;
-	            case GAMESTATE_EDIT:
-#if DEBUGPRNT
-printf("Gamestate entered state it shouldn't be in: %s \tto %s !\n", GetGamestateName(engine->gamestate_old), GetGamestateName(engine->gamestate_now));
-#endif					
-					engine->gamestate_new = GAMESTATE_EXIT;
-	                break;
-	            case GAMESTATE_EXIT:
-		            break;
-			}
 
-			TickParticles(engine->particles, t, DT_SEC);
-			// advance time
+//perform update for current gamestate
+			z->gamestate_new = z->update[z->gamestate_now](t, DT_SEC, z);
+
+// tick things that always tick
+			TickParticles(z->particles, t, DT_SEC);
+
+// advance time
 			t++;
 			time_accumulator -= DT_MS;
 
-			if (ActionPressed(engine->controller, A_QUIT))
-        		engine->gamestate_new = GAMESTATE_EXIT;
+// allow quit whenever
+			if (ActionPressed(z->controller, A_QUIT))
+        		z->gamestate_new = GAMESTATE_EXIT;
 		} //logic update end
 		
 /* RENDER UPDATE */
-		//@TODO: calculate interpolation value from last render to smooth rendering
-		//prev_state * (1-t) + curr_state * t
-		CleanRenderTargets(engine->viewport);
-		switch (engine->gamestate_now)
-		{
-			case GAMESTATE_INIT:
-			break;
-			case GAMESTATE_MAIN:
-				RenderMain(t_r, engine->viewport, engine->game, engine->controller, engine->particles, engine->assets, engine->menus);
-			break;
-			case GAMESTATE_OPTS:
-				RenderOpts(t_r, engine->viewport, engine->game, engine->controller, engine->particles, engine->assets, engine->menus);
-			break;			
-			case GAMESTATE_PLAY:
-				RenderPlay(t_r, engine->viewport, engine->game, engine->controller, engine->particles, engine->assets, engine->menus);
-			break;
-			case GAMESTATE_EVNT:
-			break;
-			case GAMESTATE_LOSE:
-				RenderLose(t_r, engine->viewport, engine->game, engine->controller, engine->particles, engine->assets, engine->menus);
-			break;
-			case GAMESTATE_GOAL:
-			break;
-			case GAMESTATE_EDIT:
-			break;
-			case GAMESTATE_EXIT:
-			break;
-		}
+
+		CleanRenderTargets(z->viewport);
+
+	//TODO: calculate interpolation value from last render to smooth rendering: prev_state * (1-t) + curr_state * t
+		r32 alpha = 1.f;
+
+	//perform rendering for current state
+		z->render[z->gamestate_now](t_r, alpha, z);
+
+	//tick render time
 		t_r++;
-		SDL_SetRenderTarget(engine->viewport->renderer, engine->viewport->render_layer[ZSDL_RENDERLAYER_ENTITIES]);
-		DrawParticles(engine->viewport, t, engine->particles);
-		FinalizeRenderAndPresent(engine->viewport);
+
+	// draw things that are always drawn
+		SDL_SetRenderTarget(z->viewport->renderer, z->viewport->render_layer[ZSDL_RENDERLAYER_ENTITIES]);
+		DrawParticles(z->viewport, t, z->particles);
+
+	//render end
+		FinalizeRenderAndPresent(z->viewport);
 	//main loop end
 }
 
@@ -256,15 +203,40 @@ int main(int argc, char* argv[])
 	menus[MENU_OPTIONS_AUDIO] = CreateMenu("options_audio");
 	menus[MENU_OPTIONS_INPUT] = CreateMenu("options_input");
 
-	Engine* engine = (Engine*)malloc(sizeof(Engine));
-	engine->viewport = viewport;
-	engine->game = game;
-	engine->controller = controller;
-	engine->assets = assets;
-	engine->particles = particles;
-	engine->gamestate_now = GAMESTATE_INIT;
-	engine->gamestate_new = GAMESTATE_INIT;
-	engine->menus = menus;
+	zEngine* z = (zEngine*)malloc(sizeof(zEngine));
+	z->viewport = viewport;
+	z->game = game;
+	z->controller = controller;
+	z->assets = assets;
+	z->particles = particles;
+	z->gamestate_now = GAMESTATE_INIT;
+	z->gamestate_new = GAMESTATE_INIT;
+	z->menus = menus;
+
+    z->update[GAMESTATE_INIT] = &UpdateInit;
+    z->update[GAMESTATE_MAIN] = &UpdateMain;
+    z->update[GAMESTATE_OPTS] = &UpdateOptions;
+    z->update[GAMESTATE_PLAY] = &UpdatePlay;
+    z->update[GAMESTATE_EVNT] = &UpdateEvent;
+    z->update[GAMESTATE_LOSE] = &UpdateLose;
+    z->update[GAMESTATE_GOAL] = &UpdateGoal;
+    z->update[GAMESTATE_EDIT] = &UpdateEdit;
+    z->update[GAMESTATE_EXIT] = &UpdateExit;
+
+    z->render[GAMESTATE_INIT] = &RenderInit;
+    z->render[GAMESTATE_MAIN] = &RenderMain;
+    z->render[GAMESTATE_OPTS] = &RenderOptions;
+    z->render[GAMESTATE_PLAY] = &RenderPlay;
+    z->render[GAMESTATE_EVNT] = &RenderEvent;
+    z->render[GAMESTATE_LOSE] = &RenderLose;
+    z->render[GAMESTATE_GOAL] = &RenderGoal;
+    z->render[GAMESTATE_EDIT] = &RenderEdit;
+    z->render[GAMESTATE_EXIT] = &RenderExit;
+
+
+	// Gamestate (*fptr)(u32, r32, void*);
+	// fptr = &UpdateEvent;
+
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^ INIT ^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 
 /*vvvvvvvvvvvvvvvvvvvvvvvvvv LOAD ASSETS vvvvvvvvvvvvvvvvvvvvvvvvvv*/
@@ -283,21 +255,24 @@ LoadSound(assets, SFX_TAP, SFX_PATH_TAP);
 LoadSound(assets, SFX_HOVER, SFX_PATH_HOVER);
 
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^ LOAD ASSETS ^^^^^^^^^^^^^^^^^^^^^^^^^^*/
-SetCursor(viewport, assets, CUR_POINT);
 
+SetCursor(viewport, assets, CUR_POINT);
 //START IN FULLSCREEN
-// ToggleFullscreen(engine->viewport);
-ComputePixelScale(engine->viewport);
-CalculateScreen(engine->viewport);
-RefreshCursors(engine->viewport, engine->assets);
+// ToggleFullscreen(z->viewport);
+ComputePixelScale(z->viewport);
+CalculateScreen(z->viewport);
+RefreshCursors(z->viewport, z->assets);
+
+
+
 
 
 /*vvvvvvvvvvvvvvvvvvvvvvvvvv MAIN LOOP vvvvvvvvvvvvvvvvvvvvvvvvvv*/
 #ifdef __EMSCRIPTEN__
-	emscripten_set_main_loop_arg(mainloop, engine, -1, 1);
+	emscripten_set_main_loop_arg(mainloop, z, -1, 1);
 #else
-	while (engine->gamestate_now != GAMESTATE_EXIT)
-		mainloop(engine);
+	while (z->gamestate_now != GAMESTATE_EXIT)
+		mainloop(z);
 #endif
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^ MAIN LOOP ^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 
@@ -311,7 +286,7 @@ printf("\n~~~Exiting game!~~~\n");
 	FreeAssets(assets);
 	FreeViewport(viewport);
 	FreeGame(game);
-	free(engine);
+	free(z);
 
 	Mix_Quit();
 	IMG_Quit();
