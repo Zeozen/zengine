@@ -5,14 +5,14 @@
 
 b8 SetupSDL()
 {
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER) < 0)
 	{
 		printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
 		return 0;
 	}
 	else
 	{
-		// init SDL_Image
+// init SDL_Image
 		int flags	= IMG_INIT_PNG;
 		int initted = IMG_Init(flags);
 		if ((initted & flags) != flags)
@@ -21,15 +21,19 @@ b8 SetupSDL()
 			printf("IMG_Init: %s\n", IMG_GetError());
 		}
 
-		//init SDL_Mixer
+//init SDL_Mixer
 		Mix_Init(MIX_INIT_OGG);
 		Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 4096);
 		Mix_AllocateChannels(ASSETBANK_SOUNDS_MAX);
 		Mix_ReserveChannels(ASSETBANK_SOUNDS_MAX);
-		for (i32 i = 0; i < ASSETBANK_SOUNDS_MAX; i++)
-			Mix_Volume(i, MIX_MAX_VOLUME/2);
+		MixSFX();
 
-		Mix_VolumeMusic(255);
+//init joysticks
+
+//add n64 support
+		SDL_GameControllerAddMapping("030000009b2800000c00000000000000,N64,a:b0,b:b1,y:b6,x:b5,start:b3,leftshoulder:b8,rightshoulder:b9,dpup:b10,dpleft:b12,dpdown:b11,dpright:b13,leftx:a0,lefty:a1,lefttrigger:b2,righttrigger:");
+		SDL_GameControllerEventState(SDL_IGNORE);
+		
 
 		return 1;
 	}
@@ -44,8 +48,9 @@ Viewport* CreateViewport(const char* window_title)
 	viewport->screen = (SDL_Rect){0, 0, ZSDL_INTERNAL_WIDTH*pixel_size_web, ZSDL_INTERNAL_HEIGHT*pixel_size_web};
 	SET8IN64(pixel_size_web, &viewport->settings, ZSDL_SETTINGS_BYTE_PIXELSCALE);
 	#else
-	viewport->screen = (SDL_Rect){0, 0, ZSDL_INTERNAL_WIDTH, ZSDL_INTERNAL_HEIGHT};
-	SET8IN64(1, &viewport->settings, ZSDL_SETTINGS_BYTE_PIXELSCALE);
+	u8 pixel_size_desktop_default = 3;
+	viewport->screen = (SDL_Rect){0, 0, ZSDL_INTERNAL_WIDTH * pixel_size_desktop_default, ZSDL_INTERNAL_HEIGHT * pixel_size_desktop_default};
+	SET8IN64(pixel_size_desktop_default, &viewport->settings, ZSDL_SETTINGS_BYTE_PIXELSCALE);
 	#endif
 #ifdef DEBUGPRNT
 	printf("Initialising zSDL viewport...\n");
@@ -140,27 +145,7 @@ void FreeViewport(Viewport* viewport)
 }
 
 
-Controller* CreateController()
-{
-	printf("initializing Controller...\n");
-    Controller* controller = (Controller*)malloc(sizeof(Controller));
 
-	controller->actions = 0;
-	controller->directional_vector = ZERO_I2;
-	controller->move_vector = ZERO_I2;
-
-	if (controller != NULL)
-		printf("Controller initialized.\n");
-	else
-		printf("Controller failed to initialise!\n");
-	return controller;
-}
-
-void FreeController(Controller* controller)
-{
-	free(controller);
-	printf("controller freed.\n");
-}
 
 Assets* CreateAssets(Viewport* viewport)
 {
@@ -506,60 +491,239 @@ void MixSFX()
 
 
 
-/* this one is kind of a mess, but it deals with mouse scaling related to widescreen and weird monitor sizes, 
-@TODO: improve this function => make it more clear to read and understand, find better solution*/
-i2 MouseLocation(Controller* c, Viewport* viewport)
-{
-	u8 pixelsize				 = GET8IN64(viewport->settings, ZSDL_SETTINGS_BYTE_PIXELSCALE);
-	i2 pixel_corrected_mouse_loc = c->mouse_location;
 
-	i2 camera_offset = make_i2(viewport->screen.x, viewport->screen.y);
-	pixel_corrected_mouse_loc = sub_i2(pixel_corrected_mouse_loc, camera_offset);
-	pixel_corrected_mouse_loc = i2_clamp_i2(pixel_corrected_mouse_loc, ZERO_I2, make_i2(viewport->screen.w, viewport->screen.h));
-	pixel_corrected_mouse_loc.x /= pixelsize;
-	pixel_corrected_mouse_loc.y /= pixelsize;
-	
-	//if (SDL_GetWindowFlags(viewport->window) & SDL_WINDOW_FULLSCREEN)
-	//{
-	//	SDL_Rect draw_area = {0, 0, ZSDL_INTERNAL_WIDTH, ZSDL_INTERNAL_HEIGHT};
-	//	i32 w_max, h_max;
-	//	//int display_index = SDL_GetWindowDisplayIndex(viewport->window);
-	//	SDL_DisplayMode current_display_mode;
-	//	SDL_GetCurrentDisplayMode(0, &current_display_mode);
-	//	w_max					   = current_display_mode.w;
-	//	h_max					   = current_display_mode.h;
-	//	//i32 dis_to_internal_size_w = w_max / ZSDL_INTERNAL_WIDTH;
-	//	//i32 dis_to_internal_size_h = h_max / ZSDL_INTERNAL_HEIGHT;
-	//	//i32 min_size			   = MinI32(dis_to_internal_size_w, dis_to_internal_size_h);
-	//	draw_area.w				   = ZSDL_INTERNAL_WIDTH * pixelsize;
-	//	draw_area.h				   = ZSDL_INTERNAL_HEIGHT * pixelsize;
-	//	draw_area.x				   = (w_max / 2) - (draw_area.w / 2);
-	//	draw_area.y				   = (h_max / 2) - (draw_area.h / 2);
-	//	pixel_corrected_mouse_loc.x -= draw_area.x;
-	//	pixel_corrected_mouse_loc.y -= draw_area.y;
-	//	pixel_corrected_mouse_loc.x = ClampI32(pixel_corrected_mouse_loc.x, 0, (draw_area.w));
-	//	pixel_corrected_mouse_loc.y = ClampI32(pixel_corrected_mouse_loc.y, 0, (draw_area.h));
-	//	pixel_corrected_mouse_loc.x /= pixelsize;
-	//	pixel_corrected_mouse_loc.y /= pixelsize;
-	//}
-	//else
-	//{
-	//	pixel_corrected_mouse_loc.x /= pixelsize;
-	//	pixel_corrected_mouse_loc.y /= pixelsize;
-	//}
-	
-	return pixel_corrected_mouse_loc;
+
+/*vvvvvvvvvvvvvvvvvvvvvvvvvv INPUT vvvvvvvvvvvvvvvvvvvvvvvvvv*/
+
+Input* CreateInputManager()
+{
+	Input* input = malloc(sizeof(Input));
+	for (i32 p = 0; p < MAX_PLAYERS; p++)
+	{
+		input->pcon[p] = malloc(sizeof(PlayerController));
+		memset(input->pcon[p], 0, sizeof(PlayerController));
+	}
+
+	input->pcon[PLAYER_1]->actions = 0;
+	input->pcon[PLAYER_1]->active = 1;
+	input->pcon[PLAYER_1]->nav = ZERO_R2;
+	input->pcon[PLAYER_1]->cursor_loc = make_r2(ZSDL_INTERNAL_HALFWIDTH, ZSDL_INTERNAL_HALFHEIGHT);
+
+	int num_joysticks = SDL_NumJoysticks();
+		if ((num_joysticks >= 1) && (SDL_IsGameController(0)))
+		{
+			input->pcon[PLAYER_1]->keyboard = 0;
+			input->pcon[PLAYER_1]->gamepad = SDL_GameControllerOpen(0);
+		}
+		else
+		{
+			input->pcon[PLAYER_1]->keyboard = 1;
+		}
+
+	SetDefaultMapping(input->pcon[PLAYER_1], input->pcon[PLAYER_1]->keyboard, 1);
+		
+
+	if (input != NULL)
+		printf("input manager initialized.\n");
+	else
+		printf("input manager failed to initialize!\n");
+	return input;
 }
 
+void FreeInputManager(Input* input)
+{
+	for (i32 p = 0; p < MAX_PLAYERS; p++)
+	{
+		if (input->pcon[p] != NULL)
+		{
+			if (input->pcon[p]->gamepad != NULL)
+			{
+				SDL_GameControllerClose(input->pcon[p]->gamepad);
+			}
+			free(input->pcon[p]);
+		}	
+	}
+	free(input);
+	printf("Input freed.");
+}
+
+void AddPlayer(Input* input)
+{
+
+}
+
+void RemovePlayer(Input* input, i32 player_index)
+{
+
+}
+
+void SetDefaultMapping(PlayerController* pcon, b8 keyboard, i32 player)
+{
+	if (player == 1)
+	{
+		if (keyboard)
+		{
+			pcon->mapping[ACT_PLAY] = SDL_SCANCODE_RETURN;
+			pcon->mapping[ACT_1] 	= SDL_SCANCODE_SPACE;
+			pcon->mapping[ACT_2] 	= SDL_SCANCODE_Z;
+			pcon->mapping[ACT_3] 	= SDL_SCANCODE_X;
+			pcon->mapping[ACT_4] 	= SDL_SCANCODE_C;
+			pcon->mapping[ACT_NAVU] = SDL_SCANCODE_UP;
+			pcon->mapping[ACT_NAVD] = SDL_SCANCODE_DOWN;
+			pcon->mapping[ACT_NAVL] = SDL_SCANCODE_LEFT;
+			pcon->mapping[ACT_NAVR] = SDL_SCANCODE_RIGHT;
+		}
+		else
+		{
+			pcon->mapping[ACT_PLAY] = SDL_CONTROLLER_BUTTON_START;
+			pcon->mapping[ACT_1] = SDL_CONTROLLER_BUTTON_A;
+			pcon->mapping[ACT_2] = SDL_CONTROLLER_BUTTON_B;
+			pcon->mapping[ACT_3] = SDL_CONTROLLER_BUTTON_X;
+			pcon->mapping[ACT_4] = SDL_CONTROLLER_BUTTON_Y;
+			pcon->mapping[ACT_NAVU] = SDL_CONTROLLER_BUTTON_DPAD_UP;
+			pcon->mapping[ACT_NAVD] = SDL_CONTROLLER_BUTTON_DPAD_DOWN;
+			pcon->mapping[ACT_NAVL] = SDL_CONTROLLER_BUTTON_DPAD_LEFT;
+			pcon->mapping[ACT_NAVR] = SDL_CONTROLLER_BUTTON_DPAD_RIGHT;
+		}
+	}
+}
+
+void TickInput(Input* input)
+{
+	SDL_PumpEvents();
+	SDL_GameControllerUpdate();
+	const u8* keystate = SDL_GetKeyboardState(NULL);
+	u32 mousestate	   = SDL_GetMouseState(&input->mouse_location.x, &input->mouse_location.y);
+	
+
+	for (i32 i = 0; i < MAX_PLAYERS; i++)
+	{
+		PlayerController* pc = input->pcon[i];
+		if (pc->active)
+		{
+			pc->actions <<= MAX_ACTIONS;
+			if (pc->keyboard)
+			{
+				pc->nav.y	= keystate[pc->mapping[ACT_NAVU]] - keystate[pc->mapping[ACT_NAVD]];
+				pc->nav.x	= keystate[pc->mapping[ACT_NAVR]] - keystate[pc->mapping[ACT_NAVL]];
+				pc->actions |= ACT(ACT_1) 		* keystate[pc->mapping[ACT_1]];
+				pc->actions |= ACT(ACT_2) 		* keystate[pc->mapping[ACT_2]];
+				pc->actions |= ACT(ACT_3) 		* keystate[pc->mapping[ACT_3]];
+				pc->actions |= ACT(ACT_4) 		* keystate[pc->mapping[ACT_4]];
+				pc->actions |= ACT(ACT_PLAY) 	* keystate[pc->mapping[ACT_PLAY]];
+				pc->actions |= ACT(ACT_NAVU) 	* keystate[pc->mapping[ACT_NAVU]];
+				pc->actions |= ACT(ACT_NAVD) 	* keystate[pc->mapping[ACT_NAVD]];
+				pc->actions |= ACT(ACT_NAVL) 	* keystate[pc->mapping[ACT_NAVL]];
+				pc->actions |= ACT(ACT_NAVR) 	* keystate[pc->mapping[ACT_NAVR]];
+			}
+			else
+			{
+				pc->actions |= ACT(ACT_1) * SDL_GameControllerGetButton(pc->gamepad, pc->mapping[ACT_1]);
+				pc->actions |= ACT(ACT_2) * SDL_GameControllerGetButton(pc->gamepad, pc->mapping[ACT_2]);
+				pc->actions |= ACT(ACT_3) * SDL_GameControllerGetButton(pc->gamepad, pc->mapping[ACT_3]);
+				pc->actions |= ACT(ACT_4) * SDL_GameControllerGetButton(pc->gamepad, pc->mapping[ACT_4]);
+				// TODO think about whether analog and dpad should be separated or not, for now update both as one
+				Sint16 axis_hori = SDL_GameControllerGetAxis(pc->gamepad, SDL_CONTROLLER_AXIS_LEFTX);
+				Sint16 axis_vert = SDL_GameControllerGetAxis(pc->gamepad, SDL_CONTROLLER_AXIS_LEFTY);
+				i32 dpad_u = SDL_GameControllerGetButton(pc->gamepad, SDL_CONTROLLER_BUTTON_DPAD_UP);
+				i32 dpad_d = SDL_GameControllerGetButton(pc->gamepad, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+				i32 dpad_l = SDL_GameControllerGetButton(pc->gamepad, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+				i32 dpad_r = SDL_GameControllerGetButton(pc->gamepad, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
 
 
+				if (dpad_u || dpad_d)
+				{
+					pc->nav.y = (r32)(dpad_d) - (r32)(dpad_u);
+					pc->actions |= ACT(ACT_NAVU) * dpad_u;
+					pc->actions |= ACT(ACT_NAVD) * dpad_d;
+				}
+				else
+				{
+					if (AbsI32(axis_vert) >= CONTROLLER_DEADZONE)
+						pc->nav.y = ((r32)axis_vert / (r32)CONTROLLER_AXIS_VALUE_MAX);
+					else
+						pc->nav.y = 0.f;
+					pc->actions |= ACT(ACT_NAVU) * (axis_vert >= (CONTROLLER_AXIS_VALUE_HALF));
+					pc->actions |= ACT(ACT_NAVD) * (axis_vert <= (-CONTROLLER_AXIS_VALUE_HALF));
+				}
+				if (dpad_l || dpad_r)
+				{
+					pc->nav.x = (r32)(dpad_r) - (r32)(dpad_l);
+					pc->actions |= ACT(ACT_NAVL) * (axis_hori <= (CONTROLLER_AXIS_VALUE_HALF));
+					pc->actions |= ACT(ACT_NAVR) * (axis_hori >= (-CONTROLLER_AXIS_VALUE_HALF));					
+				}
+				else
+				{
+					if (AbsI32(axis_hori) >= CONTROLLER_DEADZONE)
+						pc->nav.x = ((r32)axis_hori / (r32)CONTROLLER_AXIS_VALUE_MAX);
+					else
+						pc->nav.x = 0.f;
+				}
 
+
+				// u8 nav_u = (axis_vert >= (SDL_CONTROLLER_AXIS_MAX * 0.5)) 	|| SDL_GameControllerGetButton(pc->gamepad, SDL_CONTROLLER_BUTTON_DPAD_UP);
+				// u8 nav_d = (axis_vert <= (SDL_CONTROLLER_AXIS_MAX * -0.5)) 	|| SDL_GameControllerGetButton(pc->gamepad, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+				// u8 nav_l = (axis_hori <= (SDL_CONTROLLER_AXIS_MAX * -0.5)) 	|| SDL_GameControllerGetButton(pc->gamepad, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+				// u8 nav_r = (axis_hori >= (SDL_CONTROLLER_AXIS_MAX * 0.5)) 	|| SDL_GameControllerGetButton(pc->gamepad, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+				// pc->actions |= ACT(ACT_NAVU) * nav_u;
+				// pc->actions |= ACT(ACT_NAVD) * nav_d;
+				// pc->actions |= ACT(ACT_NAVL) * nav_l;
+				// pc->actions |= ACT(ACT_NAVR) * nav_r;
+				// if (nav_u || nav_d)
+				// {
+				// 	pc->nav.y = (r32)(nav_u) + (r32)(nav_d) * -1.f;
+				// }
+				// else
+				// {
+				// 	if (AbsI32(axis_vert) >= CONTROLLER_DEADZONE)
+				// 		pc->nav.y = ((r32)axis_vert / (r32)SDL_CONTROLLER_AXIS_MAX) * -1.f;
+				// 	else
+				// 		pc->nav.y = 0.f;
+				// }
+				// if (nav_l || nav_r)
+				// {
+				// 	pc->nav.x = (r32)(nav_r) + (r32)(nav_l) * -1.f;
+				// }
+				// else
+				// {
+				// 	if (AbsI32(axis_hori) >= CONTROLLER_DEADZONE)
+				// 		pc->nav.x = (r32)axis_hori / (r32)SDL_CONTROLLER_AXIS_MAX;
+				// 	else
+				// 		pc->nav.x = 0.f;
+				// }
+			}
+		}
+	}
+}
+
+Controller* CreateController()
+{
+	printf("initializing Controller...\n");
+    Controller* controller = (Controller*)malloc(sizeof(Controller));
+
+	controller->actions = 0;
+	controller->directional_vector = ZERO_I2;
+	controller->move_vector = ZERO_I2;
+
+	if (controller != NULL)
+		printf("Controller initialized.\n");
+	else
+		printf("Controller failed to initialise!\n");
+	return controller;
+}
+
+void FreeController(Controller* controller)
+{
+	free(controller);
+	printf("controller freed.\n");
+}
 
 void CollectInput(Controller* c)
 {
 	c->actions <<= 32;
 	SDL_PumpEvents();
 	const u8* keystate = SDL_GetKeyboardState(NULL);
+	
 	u32 mousestate	   = SDL_GetMouseState(&c->mouse_location.x, &c->mouse_location.y);
 
 	//@todo: rebindable keybinds
@@ -584,38 +748,37 @@ void CollectInput(Controller* c)
 	c->actions |= ACTION(A_THREE) 	* keystate[SDL_SCANCODE_3];
 	c->actions |= ACTION(A_TAB) 	* keystate[SDL_SCANCODE_TAB];
 
-	SDL_Event e;
-	while (SDL_PollEvent(&e))
-	{
-		if (e.type == SDL_QUIT)
-			c->actions |= ACTION(A_QUIT);
-		if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_RETURN)
-		{
-			if (keystate[SDL_SCANCODE_LCTRL])
-			{
-				c->actions |= ACTION(A_FSCR);
-			}
-		}
-		if (e.type == SDL_MOUSEWHEEL)
-		{
-			if (e.wheel.y > 0)
-				c->actions |= ACTION(A_WHLU);
-			else if (e.wheel.y < 0)
-				c->actions |= ACTION(A_WHLD);
-		}
-		if (e.type == SDL_WINDOWEVENT)
-		{
-			switch(e.window.event)
-			{
-				case SDL_WINDOWEVENT_RESIZED:
-					c->actions |= ACTION(A_RSIZ);
-				break;
-				default:
-				break;
-			}
-		}
-	}
 }
+
+//Returns pixelscaled mouse location clamped to render area
+i2 MouseLocation(Controller* c, Viewport* viewport)
+{
+	u8 pixelsize				 	= GET8IN64(viewport->settings, ZSDL_SETTINGS_BYTE_PIXELSCALE);
+	i2 pixel_corrected_mouse_loc 	= c->mouse_location;
+	i2 camera_offset 				= make_i2(viewport->screen.x, viewport->screen.y);
+	pixel_corrected_mouse_loc 		= sub_i2(pixel_corrected_mouse_loc, camera_offset);
+	pixel_corrected_mouse_loc 		= i2_clamp_i2(pixel_corrected_mouse_loc, ZERO_I2, make_i2(viewport->screen.w, viewport->screen.h));
+	pixel_corrected_mouse_loc.x 	/= pixelsize;
+	pixel_corrected_mouse_loc.y 	/= pixelsize;
+	
+	return pixel_corrected_mouse_loc;
+}
+
+b8 PlayerActionPressed(PlayerController* pc, u64 action)
+{
+	return ((pc->actions & ACT(action)) && !(pc->actions & ACT_PRE(action)));
+}
+
+b8 PlayerActionReleased(PlayerController* pc, u64 action)
+{
+	return (!(pc->actions & ACT(action)) && (pc->actions & ACT_PRE(action)));
+}
+
+b8 PlayerActionHeld(PlayerController* pc, u64 action)
+{
+	return ((pc->actions & ACT(action)) && (pc->actions & ACT_PRE(action)));
+}
+
 
 b8 ActionPressed( Controller* c,  u64 action)
 {
@@ -632,54 +795,13 @@ b8 ActionHeld( Controller* c,  u64 action)
 	return ((c->actions & ACTION(action)) && (c->actions & ACTION_PRE(action)));
 }
 
+/*^^^^^^^^^^^^^^^^^^^^^^^^^^ INPUT ^^^^^^^^^^^^^^^^^^^^^^^^^^*/
+
 /*vvvvvvvvvvvvvvvvvvvvvvvvvv PARTICLES vvvvvvvvvvvvvvvvvvvvvvvvvv*/
 Particles* InitParticles()
 {
 	Particles* particles = malloc(sizeof(Particles));
 	memset(particles, 0, sizeof(Particles));
-	// for (i32 i = 0; i < DOTS_MAX; i++)
-	// {
-	// 	particles->dots[i].lifetime		= 0;
-	// 	particles->dots[i].current_life	= 0;
-	// 	particles->dots[i].pos			= ZERO_R2;
-	// 	particles->dots[i].vel			= ZERO_R2;
-	// 	particles->dots[i].acc			= ZERO_R2;
-	// 	particles->dots[i].r = 0;
-	// 	particles->dots[i].g = 0;
-	// 	particles->dots[i].b = 0;
-	// 	particles->dots[i].a = 0;
-	// 	particles->dots[i].r_0 = 0;
-	// 	particles->dots[i].g_0 = 0;
-	// 	particles->dots[i].b_0 = 0;
-	// 	particles->dots[i].a_0 = 0;
-	// 	particles->dots[i].r_1			= 0;
-	// 	particles->dots[i].g_1			= 0;
-	// 	particles->dots[i].b_1			= 0;
-	// 	particles->dots[i].a_1			= 0;
-	// }
-	// for (i32 i = 0; i < BUBBLES_MAX; i++)
-	// {
-	// 	particles->bubbles[i].lifetime		= 0;
-	// 	particles->bubbles[i].current_life	= 0;
-	// 	particles->bubbles[i].pos			= ZERO_R2;
-	// 	particles->bubbles[i].vel			= ZERO_R2;
-	// 	particles->bubbles[i].acc			= ZERO_R2;
-	// 	particles->bubbles[i].rad			= 0.f;
-	// 	particles->bubbles[i].rad_0			= 0.f;
-	// 	particles->bubbles[i].rad_1			= 0.f;
-	// 	particles->bubbles[i].r = 0;
-	// 	particles->bubbles[i].g = 0;
-	// 	particles->bubbles[i].b = 0;
-	// 	particles->bubbles[i].a = 0;
-	// 	particles->bubbles[i].r_0 = 0;
-	// 	particles->bubbles[i].g_0 = 0;
-	// 	particles->bubbles[i].b_0 = 0;
-	// 	particles->bubbles[i].a_0 = 0;
-	// 	particles->bubbles[i].r_1			= 0;
-	// 	particles->bubbles[i].g_1			= 0;
-	// 	particles->bubbles[i].b_1			= 0;
-	// 	particles->bubbles[i].a_1			= 0;
-	// }
 	if (particles != NULL)
 		printf("particles initialized.\n");
 	else
@@ -691,7 +813,7 @@ Particles* InitParticles()
 b8 SpawnBubble(Particles* p, u16 lifetime, r2 pos, r2 vel, r2 acc, r32 depth, r32 initial_radius, r32 final_radius, SDL_Color initial_color, SDL_Color final_color)
 {
 	i32 id = -1;
-	//TODO: Find way to instantly pick vacant id
+	//TODO: Find way to instantly pick vacant id, removing this loop
 	for (i32 i = 0; i < BUBBLES_MAX; i++)
 	{
 		if (!(p->bubbles[i].current_life))
@@ -954,8 +1076,8 @@ Menu CreateMenu(const char* config_section)
 		config_key[chr_mark] = 's';
 		const char* text_raw = ini_get(menu_config, config_section, config_key);
 
-		printf("values from ini file:\n text: %s\n margins_x: (%f, %f)\n margins_y: (%f, %f)\n src_loc: (%d, %d)\n slice dim: %d\n",
-		text_raw, margins_x_raw.x, margins_x_raw.y, margins_y_raw.x, margins_y_raw.y, src_raw.x, src_raw.y, slice_dim_raw);
+		// printf("values from ini file:\n text: %s\n margins_x: (%f, %f)\n margins_y: (%f, %f)\n src_loc: (%d, %d)\n slice dim: %d\n",
+		// text_raw, margins_x_raw.x, margins_x_raw.y, margins_y_raw.x, margins_y_raw.y, src_raw.x, src_raw.y, slice_dim_raw);
 		
 		menu.buttons[i] = AddButton(src_raw, slice_dim_raw, margins_x_raw, margins_y_raw, text_raw, txt_offset_y_normal_raw, txt_offset_y_hovered_raw, txt_offset_y_pressed_raw);
 	}
@@ -994,16 +1116,16 @@ Button AddButton(i2 src_loc, u32 slice_dim, r2 margins_x, r2 margins_y, const ch
 	btn.txt_offset_y_hovered = txt_offset_y_hovered;
 	btn.txt_offset_y_pressed = txt_offset_y_pressed;
 
-	printf("\nprocessed values from button:\n src: (%d, %d)\n dst_loc: (%d, %d)\n dst_siz: (%d, %d)\n slice_dim: %d\n txt: %s\n\n",
-	btn.src_loc.x, 
-	btn.src_loc.y, 
-	btn.dst_loc.x,
-	btn.dst_loc.y,
-	btn.dst_siz.x,
-	btn.dst_siz.y,
-	btn.slice_dim,
-	btn.txt
-	);
+	// printf("\nprocessed values from button:\n src: (%d, %d)\n dst_loc: (%d, %d)\n dst_siz: (%d, %d)\n slice_dim: %d\n txt: %s\n\n",
+	// btn.src_loc.x, 
+	// btn.src_loc.y, 
+	// btn.dst_loc.x,
+	// btn.dst_loc.y,
+	// btn.dst_siz.x,
+	// btn.dst_siz.y,
+	// btn.slice_dim,
+	// btn.txt
+	// );
 	return btn;
 }
 
@@ -1015,9 +1137,11 @@ Button AddButton(i2 src_loc, u32 slice_dim, r2 margins_x, r2 margins_y, const ch
 
 
 
-i32 TickMenu(Menu menu, i2 mouse_location, Controller* controller)
+i32 TickMenu(Menu menu, i2 mouse_location, Controller* controller, Input* input)
 {
 	SDL_Point mpoint = {mouse_location.x, mouse_location.y};
+	SDL_Point p1_pt = {input->pcon[PLAYER_1]->cursor_loc.x, input->pcon[PLAYER_1]->cursor_loc.y};
+	//SDL_Point p2_pt = {mouse_location.x, mouse_location.y};
 	i32 button_was_pressed = -1;
 	static b8 transition_allowed[BUTTON_STATE_MAX*BUTTON_STATE_MAX] = 
 	{ //FROM:   inact	active	hovered	pressed	held	release	||TO:
@@ -1038,17 +1162,17 @@ i32 TickMenu(Menu menu, i2 mouse_location, Controller* controller)
 
 		if (btn_state_now) // inactive if 0
 		{
-			if (SDL_PointInRect(&mpoint, &hitbox))
+			if (SDL_PointInRect(&mpoint, &hitbox) || SDL_PointInRect(&p1_pt, &hitbox))
 			{
-				if (ActionPressed(controller, A_MB_L))
+				if (ActionPressed(controller, A_MB_L) || (PlayerActionPressed(input->pcon[PLAYER_1], ACT_1)))
 				{
 					btn_state_new = BUTTON_STATE_PRESSED;
 				}
-				else if (ActionHeld(controller, A_MB_L))
+				else if (ActionHeld(controller, A_MB_L) || (PlayerActionHeld(input->pcon[PLAYER_1], ACT_1)))
 				{
 					btn_state_new = BUTTON_STATE_HELD;
 				}
-				else if (ActionReleased(controller, A_MB_L))
+				else if (ActionReleased(controller, A_MB_L) || (PlayerActionReleased(input->pcon[PLAYER_1], ACT_1)))
 				{
 					btn_state_new = BUTTON_STATE_RELEASED;
 				}
@@ -1056,6 +1180,7 @@ i32 TickMenu(Menu menu, i2 mouse_location, Controller* controller)
 				{
 					btn_state_new = BUTTON_STATE_HOVERED;
 				}
+
 			}
 			else
 			{

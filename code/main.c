@@ -37,21 +37,52 @@ void mainloop(void *arg)
 		while (time_accumulator >= DT_MS)
 		{
 			z->gamestate_old = z->gamestate_now;
-			CollectInput(z->controller);
-			
 
-			if (ActionPressed(z->controller, A_RSIZ))
+/* INPUT COLLECTION */
+			CollectInput(z->controller);
+			TickInput(z->input);
+
+			for (i32 i = 0; i < MAX_PLAYERS; i++)
 			{
-				ComputePixelScale(z->viewport);
-				CalculateScreen(z->viewport);
-				RefreshCursors(z->viewport, z->assets);
+				if (z->input->pcon[i]->active)
+				{
+					z->input->pcon[i]->cursor_loc = add_r2(z->input->pcon[i]->cursor_loc, z->input->pcon[i]->nav);
+					z->input->pcon[i]->cursor_loc.x = ClampR32(z->input->pcon[i]->cursor_loc.x, 0, ZSDL_INTERNAL_WIDTH - 8);
+					z->input->pcon[i]->cursor_loc.y = ClampR32(z->input->pcon[i]->cursor_loc.y, 0, ZSDL_INTERNAL_HEIGHT - 8);
+				}
 			}
-			if (ActionPressed(z->controller, A_FSCR))
+
+			const u8* keystate = SDL_GetKeyboardState(NULL);
+			SDL_Event e;
+			while (SDL_PollEvent(&e))
 			{
-				ToggleFullscreen(z->viewport);
-				ComputePixelScale(z->viewport);
-				CalculateScreen(z->viewport);
-				RefreshCursors(z->viewport, z->assets);
+				if (e.type == SDL_QUIT)
+					z->gamestate_new = GAMESTATE_EXIT;
+				if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_RETURN)
+				{
+					if (keystate[SDL_SCANCODE_LALT])
+					{
+						ToggleFullscreen(z->viewport);
+						ComputePixelScale(z->viewport);
+						CalculateScreen(z->viewport);
+						RefreshCursors(z->viewport, z->assets);
+					}
+				}
+				if (e.type == SDL_WINDOWEVENT)
+				{
+					switch(e.window.event)
+					{
+						case SDL_WINDOWEVENT_RESIZED:
+						{
+							ComputePixelScale(z->viewport);
+							CalculateScreen(z->viewport);
+							RefreshCursors(z->viewport, z->assets);
+							break;
+						}
+						default:
+						break;
+					}
+				}
 			}
 			
 /* TRANSITION GAMESTATE BEGIN */
@@ -193,6 +224,7 @@ int main(int argc, char* argv[])
 	Viewport* viewport = CreateViewport("ZENGINE");
 	Game* game = CreateGame();
 	Controller* controller = CreateController();
+	Input* input = CreateInputManager();
 	Assets* assets = CreateAssets(viewport);
 	viewport->camera = CreateCamera(ZERO_R2);
 	Particles* particles = InitParticles();
@@ -207,6 +239,7 @@ int main(int argc, char* argv[])
 	z->viewport = viewport;
 	z->game = game;
 	z->controller = controller;
+	z->input = input;
 	z->assets = assets;
 	z->particles = particles;
 	z->gamestate_now = GAMESTATE_INIT;
@@ -234,13 +267,11 @@ int main(int argc, char* argv[])
     z->render[GAMESTATE_EXIT] = &RenderExit;
 
 
-	// Gamestate (*fptr)(u32, r32, void*);
-	// fptr = &UpdateEvent;
-
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^ INIT ^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 
 /*vvvvvvvvvvvvvvvvvvvvvvvvvv LOAD ASSETS vvvvvvvvvvvvvvvvvvvvvvvvvv*/
 LoadTexture(assets, T_UI_ATLAS, viewport->renderer, T_UI_ATLAS_PATH);
+LoadTexture(assets, T_PLAYER_CURSOR, viewport->renderer, T_PLAYER_CURSOR_PATH);
 
 LoadFont(assets, FONT_ID_ZSYS, viewport->renderer, FONT_PATH_ZSYS);
 
@@ -283,6 +314,7 @@ printf("\n~~~Exiting game!~~~\n");
 	FreeParticles(particles);
 	FreeMenus(menus);
 	FreeController(controller);
+	FreeInputManager(input);
 	FreeAssets(assets);
 	FreeViewport(viewport);
 	FreeGame(game);

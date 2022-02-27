@@ -9,8 +9,10 @@
 #define T_TILE_ATLAS 0
 #define T_UI_ATLAS 1
 #define T_PLAYER_ATLAS 2
+#define T_PLAYER_CURSOR 3
 //texture paths
-#define T_UI_ATLAS_PATH "./assets/texture/gui.png"
+#define T_UI_ATLAS_PATH         "./assets/texture/gui.png"
+#define T_PLAYER_CURSOR_PATH    "./assets/cursor/cur_plr.png"
 
 //cursors
 #define CUR_POINT 0

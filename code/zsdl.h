@@ -131,6 +131,8 @@ void MixSFX();
 // ACTION MASKS
 //  usage: if (Actions.player & ACTION(A_PLR_JMP) ) -> doJumpAction
 //  store current actions in lower 32 bits and previous actions in upper 32 bits
+#define ACT(X) ((u64)1 << ((X)))
+#define ACT_PRE(X) ((u64)1 << (((X)) + 32))
 #define ACTION(X) ((u64)1 << ((X)-1))
 #define ACTION_PRE(X) ((u64)1 << (((X)-1) + 32))
 
@@ -157,6 +159,49 @@ void MixSFX();
 #define A_FOUR 21 //numbers, usually action or hotbar
 #define A_TAB 22
 
+#define MAX_ACTIONS 32
+typedef enum
+{
+	ACT_PLAY, //usually start button, or enter 
+	ACT_1, //Primary action (think A button, accept, jump etc)
+	ACT_2, //secondary action (B button)
+	ACT_3, //tertiary and quadiary actions usually map to x and y face buttons
+	ACT_4,
+	ACT_NAVU,
+	ACT_NAVD,
+	ACT_NAVL,
+	ACT_NAVR,
+} eACTIONS;
+
+#define MAX_PLAYERS 2
+typedef enum
+{
+	PLAYER_1,
+	PLAYER_2,
+} ePLAYERS;
+
+#define CONTROLLER_DEADZONE 3000
+#define CONTROLLER_AXIS_VALUE_MAX 32767
+#define CONTROLLER_AXIS_VALUE_HALF 16383
+typedef struct
+{
+    u64 actions;
+	r2  nav;
+	r2  cursor_loc;
+	SDL_GameController* gamepad;
+	i32 mapping[MAX_ACTIONS];
+	b8 keyboard;
+	b8 active;
+	//b8 analog;
+} PlayerController;
+
+typedef struct 
+{
+	PlayerController* pcon[MAX_PLAYERS];
+	i2  mouse_location;
+} Input;
+
+
 typedef struct Controller
 {
     u64 actions;
@@ -165,11 +210,21 @@ typedef struct Controller
 	i2  mouse_location;
 } Controller;
 
+Input* CreateInputManager();
+void FreeInputManager(Input* input);
+void AddPlayer(Input* input);
+void SetDefaultMapping(PlayerController* pcon, b8 keyboard, i32 player);
+void RemovePlayer(Input* input, i32 player_index);
+void TickInput(Input* input);
+
 Controller* CreateController();
 void FreeController(Controller* controller);
 
 void CollectInput(Controller* c);
 i2 MouseLocation(Controller* c, Viewport* viewport);
+b8 PlayerActionPressed(PlayerController* pc, u64 action);
+b8 PlayerActionReleased(PlayerController* pc, u64 action);
+b8 PlayerActionHeld(PlayerController* pc, u64 action);
 b8 ActionPressed(Controller* c, u64 action);
 b8 ActionReleased(Controller* c, u64 action);
 b8 ActionHeld(Controller* c, u64 action);
@@ -351,7 +406,7 @@ typedef struct Menu
 
 Menu CreateMenu(const char* config_section);
 Button AddButton(i2 src_loc, u32 slice_dim, r2 margins_x, r2 margins_y, const char* text, i8 txt_offset_y_normal, i8 txt_offset_y_hovered, i8 txt_offset_y_pressed);
-i32 TickMenu(Menu menu, i2 mouse_location, Controller* controller);
+i32 TickMenu(Menu menu, i2 mouse_location, Controller* controller, Input* input);
 void DrawMenu(Menu menu, Viewport* viewport, Assets* assets);
 void ToggleMenu(Menu* menu, b8 enable);
 void FreeMenus(Menu* menus);

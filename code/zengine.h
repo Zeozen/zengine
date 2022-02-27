@@ -14,6 +14,7 @@ typedef struct
 	Viewport* viewport;
 	Game* game;
 	Controller* controller;
+	Input* input;
 	Assets* assets;
 	Particles* particles;
 	Menu* menus;

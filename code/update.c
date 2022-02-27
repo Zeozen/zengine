@@ -20,7 +20,11 @@ i32 UpdateMain    (u32 t, r32 dt, void* engine)
     i2 mloc = MouseLocation(z->controller, z->viewport);
     r2 mpos = CamToPos(mloc, z->viewport);
 
-    i32 menu_action = TickMenu(z->menus[MENU_TITLE], mloc, z->controller);
+
+        //SDL_WarpMouseInWindow(z->viewport->window, z->controller->mouse_location.x + z->controller->move_vector.x, z->controller->mouse_location.y + z->controller->move_vector.y);
+    
+
+    i32 menu_action = TickMenu(z->menus[MENU_TITLE], mloc, z->controller, z->input);
 
     if (menu_action >= 0)
     {
@@ -112,12 +116,16 @@ i32 UpdateMain    (u32 t, r32 dt, void* engine)
 i32 UpdateOptions (u32 t, r32 dt, void* engine)
 {
     zEngine* z = (zEngine*)engine;
-
-    static u32 submenu_active = BTN_OPTS_VIDEO;
     i2 mloc = MouseLocation(z->controller, z->viewport);
     r2 mpos = CamToPos(mloc, z->viewport);
 
-    i32 menu_action = TickMenu(z->menus[MENU_OPTIONS], mloc, z->controller);
+
+    //}
+
+
+    static u32 submenu_active = BTN_OPTS_VIDEO;
+
+    i32 menu_action = TickMenu(z->menus[MENU_OPTIONS], mloc, z->controller, z->input);
 
     if (menu_action >= 0)
     {
@@ -149,7 +157,7 @@ i32 UpdateOptions (u32 t, r32 dt, void* engine)
     {
         case BTN_OPTS_VIDEO:
         {
-            submenu_action = TickMenu(z->menus[MENU_OPTIONS_VIDEO], mloc, z->controller);
+            submenu_action = TickMenu(z->menus[MENU_OPTIONS_VIDEO], mloc, z->controller, z->input);
             switch (submenu_action)
             {
                 case BTN_OPTS_VIDEO_FSCREEN:
@@ -164,7 +172,7 @@ i32 UpdateOptions (u32 t, r32 dt, void* engine)
         break;
         case BTN_OPTS_AUDIO:
         {
-            submenu_action = TickMenu(z->menus[MENU_OPTIONS_AUDIO], mloc, z->controller);
+            submenu_action = TickMenu(z->menus[MENU_OPTIONS_AUDIO], mloc, z->controller, z->input);
             switch (submenu_action)
             {
                 case BTN_OPTS_AUDIO_MAIN_VOLUME:
@@ -174,7 +182,7 @@ i32 UpdateOptions (u32 t, r32 dt, void* engine)
         }
         case BTN_OPTS_INPUT:
         {
-            submenu_action = TickMenu(z->menus[MENU_OPTIONS_INPUT], mloc, z->controller);
+            submenu_action = TickMenu(z->menus[MENU_OPTIONS_INPUT], mloc, z->controller, z->input);
             switch (submenu_action)
             {
                 case BTN_OPTS_INPUT_REBIND:
