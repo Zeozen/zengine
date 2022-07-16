@@ -223,6 +223,19 @@ void FreeAssets(Assets* assets)
 			assets->fon[i] = NULL;
 		}
 	}
+	for (i32 i = 0; i < ASSETBANK_MESHES_MAX; i++)
+	{
+		if (assets->msh[i] != NULL)
+		{
+			if (assets->msh[i]->tris != NULL)
+			{
+				free(assets->msh[i]->tris);
+				assets->msh[i]->tris = NULL;
+			}
+			free(assets->msh[i]);
+			assets->msh[i] = NULL;
+		}
+	}
 
     free(assets);
 	printf("assets freed\n");
@@ -505,9 +518,10 @@ Input* CreateInputManager()
 	}
 
 	input->pcon[PLAYER_1]->actions = 0;
-	input->pcon[PLAYER_1]->active = 1;
+	input->pcon[PLAYER_1]->active = 0;
 	input->pcon[PLAYER_1]->nav = ZERO_R2;
-	input->pcon[PLAYER_1]->cursor_loc = make_r2(ZSDL_INTERNAL_HALFWIDTH, ZSDL_INTERNAL_HALFHEIGHT);
+	//input->pcon[PLAYER_1]->cursor_loc = make_r2(ZSDL_INTERNAL_HALFWIDTH, ZSDL_INTERNAL_HALFHEIGHT);
+	input->pcon[PLAYER_1]->cursor_loc = ZERO_R2;
 
 	int num_joysticks = SDL_NumJoysticks();
 		if ((num_joysticks >= 1) && (SDL_IsGameController(0)))

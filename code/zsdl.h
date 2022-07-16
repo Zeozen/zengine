@@ -101,6 +101,7 @@ void DrawTextScreen(Viewport* viewport, zFont* font, SDL_Color color, i2 loc, co
 #define ASSETBANK_SURFACES_MAX 6
 #define ASSETBANK_FONTS_MAX 2
 #define ASSETBANK_STRINGS_MAX 5
+#define ASSETBANK_MESHES_MAX 1
 
 typedef struct Assets
 {
@@ -111,6 +112,7 @@ typedef struct Assets
 	SDL_Surface* sur[ASSETBANK_SURFACES_MAX];
 	zFont* fon[ASSETBANK_FONTS_MAX];
 	char* str[ASSETBANK_STRINGS_MAX];
+	mesh* msh[ASSETBANK_MESHES_MAX];
 } Assets;
 
 Assets* CreateAssets(Viewport* viewport);

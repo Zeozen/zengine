@@ -285,6 +285,68 @@ LoadSound(assets, SFX_SELECT, SFX_PATH_SELECT);
 LoadSound(assets, SFX_TAP, SFX_PATH_TAP);
 LoadSound(assets, SFX_HOVER, SFX_PATH_HOVER);
 
+
+//TESTING 3D
+tri* cube_tris = malloc(sizeof(tri) * 12);
+vec a = MakeVec(0.f, 0.f, 0.f);
+vec b = MakeVec(1.f, 0.f, 0.f);
+vec c = MakeVec(0.f, 1.f, 0.f);
+vec d = MakeVec(1.f, 1.f, 0.f);
+vec e = MakeVec(0.f, 0.f, 1.f);
+vec f = MakeVec(1.f, 0.f, 1.f);
+vec g = MakeVec(0.f, 1.f, 1.f);
+vec h = MakeVec(1.f, 1.f, 1.f);
+
+cube_tris[0].vert[0] = a;
+cube_tris[0].vert[1] = b;
+cube_tris[0].vert[2] = c;
+
+cube_tris[1].vert[0] = c;
+cube_tris[1].vert[1] = b;
+cube_tris[1].vert[2] = d;
+
+cube_tris[2].vert[0] = b;
+cube_tris[2].vert[1] = f;
+cube_tris[2].vert[2] = d;
+
+cube_tris[3].vert[0] = d;
+cube_tris[3].vert[1] = f;
+cube_tris[3].vert[2] = h;
+
+cube_tris[4].vert[0] = f;
+cube_tris[4].vert[1] = e;
+cube_tris[4].vert[2] = h;
+
+cube_tris[5].vert[0] = h;
+cube_tris[5].vert[1] = e;
+cube_tris[5].vert[2] = g;
+
+cube_tris[6].vert[0] = e;
+cube_tris[6].vert[1] = a;
+cube_tris[6].vert[2] = g;
+
+cube_tris[7].vert[0] = g;
+cube_tris[7].vert[1] = a;
+cube_tris[7].vert[2] = c;
+
+cube_tris[8].vert[0] = e;
+cube_tris[8].vert[1] = f;
+cube_tris[8].vert[2] = a;
+
+cube_tris[9].vert[0] = a;
+cube_tris[9].vert[1] = f;
+cube_tris[9].vert[2] = b;
+
+cube_tris[10].vert[0] = c;
+cube_tris[10].vert[1] = d;
+cube_tris[10].vert[2] = g;
+
+cube_tris[11].vert[0] = g;
+cube_tris[11].vert[1] = d;
+cube_tris[11].vert[2] = h;
+
+assets->msh[0] = CreateMesh(cube_tris, 12);
+
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^ LOAD ASSETS ^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 
 SetCursor(viewport, assets, CUR_POINT);

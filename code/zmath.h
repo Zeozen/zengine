@@ -243,6 +243,31 @@ char* PRINT_I2(const i2 a);
 char* PRINT_R2(const r2 a);
 /*^^^^^^^^^^^^^^^^^^^^ VECTOR END ^^^^^^^^^^^^^^^^^^^^*/
 
+/*vvvvvvvvvvvvvvvvvvvvvvvvvv VECTOR 3D BEGIN vvvvvvvvvvvvvvvvvvvvvvvvvv*/
+
+typedef struct Real_Vector_3D
+{
+	r32 x;
+	r32 y;
+	r32 z;
+} vec;
+
+typedef struct Real_Triangle
+{
+	vec vert[3];
+} tri;
+
+typedef struct Real_Mesh
+{
+	tri* tris;
+	i32 num;
+} mesh;
+
+vec MakeVec(r32 x, r32 y, r32 z);
+mesh* CreateMesh(tri* tris, i32 num);
+
+/*^^^^^^^^^^^^^^^^^^^^^^^^^^ VECTOR 3D END ^^^^^^^^^^^^^^^^^^^^^^^^^^*/
+
 
 /*vvvvvvvvvvvvvvvvvvvv BIT BEGIN vvvvvvvvvvvvvvvvvvvv*/
 //setting and manipulating individual bits:

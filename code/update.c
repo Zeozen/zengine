@@ -31,6 +31,7 @@ i32 UpdateMain    (u32 t, r32 dt, void* engine)
         switch (menu_action)
         {
             case BTN_PLAY:
+                return GAMESTATE_PLAY;
             break;
 	        case BTN_OPTS:
                 return GAMESTATE_OPTS;
@@ -202,7 +203,9 @@ i32 UpdatePlay    (u32 t, r32 dt, void* engine)
 {
     zEngine* z = (zEngine*)engine;
 
-    return GAMESTATE_EXIT;
+
+
+    return GAMESTATE_PLAY;
 }
 
 /*-------------------------------------------------*/

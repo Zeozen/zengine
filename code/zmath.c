@@ -625,8 +625,27 @@ char* PRINT_R2(const r2 a)
 
 /*~~~~~~~~~~~~~~~~~~~~ VECTOR END ~~~~~~~~~~~~~~~~~~~~*/
 
+/*vvvvvvvvvvvvvvvvvvvvvvvvvv VECTOR 3D BEGIN vvvvvvvvvvvvvvvvvvvvvvvvvv*/
 
+vec MakeVec(r32 x, r32 y, r32 z)
+{
+	vec new_vec;
+	new_vec.x = x;
+	new_vec.y = y;
+	new_vec.z = z;
+	return new_vec;
+}
 
+mesh* CreateMesh(tri* tris, i32 num)
+{
+	mesh* new_mesh 	= malloc(sizeof(mesh));
+	new_mesh->tris	= tris;
+	new_mesh->num 	= num;
+
+	return new_mesh;
+}
+
+/*^^^^^^^^^^^^^^^^^^^^^^^^^^ VECTOR 3D END ^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 
 /*~~~~~~~~~~~~~~~~~~~~ HELPERS BEGIN ~~~~~~~~~~~~~~~~~~~~*/
 
