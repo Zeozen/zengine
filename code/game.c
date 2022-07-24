@@ -43,7 +43,7 @@ void FreeGame(Game* game)
 {
     if (game != NULL)
         free(game);
-    printf("Game freed.\n");
+    printf("\nGame freed.");
 }
 
 

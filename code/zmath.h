@@ -263,8 +263,17 @@ typedef struct Real_Mesh
 	i32 num;
 } mesh;
 
+typedef struct Real_Matrix_4x4
+{
+	r32 m[4][4];
+} mat4x4;
+
 vec MakeVec(r32 x, r32 y, r32 z);
 mesh* CreateMesh(tri* tris, i32 num);
+
+void MultiplyMatrixVector(vec* v_in, vec* v_out, mat4x4* m);
+
+
 
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^ VECTOR 3D END ^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 

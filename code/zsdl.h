@@ -20,12 +20,20 @@ typedef struct ZSDL_Font zFont;
 
 
 /*vvvvvvvvvvvvvvvvvvvvvvvvvv VIEWPORT vvvvvvvvvvvvvvvvvvvvvvvvvv*/
+
+// SCREENSIZE CONSTANTS
 // 1/5th of full HD(1920x1080) =  384 x 216
 
-#define ZSDL_INTERNAL_WIDTH 384
-#define ZSDL_INTERNAL_HEIGHT 216
-#define ZSDL_INTERNAL_HALFWIDTH 192
-#define ZSDL_INTERNAL_HALFHEIGHT 108
+//#define ZSDL_INTERNAL_WIDTH 384
+//#define ZSDL_INTERNAL_HEIGHT 216
+//#define ZSDL_INTERNAL_HALFWIDTH 192
+//#define ZSDL_INTERNAL_HALFHEIGHT 108
+//#define ZSDL_PIXEL_SIZE_DESKTOP_DEFAULT 3
+#define ZSDL_INTERNAL_WIDTH 960
+#define ZSDL_INTERNAL_HEIGHT 540
+#define ZSDL_INTERNAL_HALFWIDTH 480
+#define ZSDL_INTERNAL_HALFHEIGHT 270
+#define ZSDL_PIXEL_SIZE_DESKTOP_DEFAULT 1
 
 #define ZSDL_RENDERLAYERS_MAX 5
 typedef enum
@@ -60,6 +68,7 @@ typedef struct Viewport
     SDL_Texture*    render_layer[ZSDL_RENDERLAYERS_MAX];
     Camera*         camera;
     SDL_Rect        screen;
+	mat4x4*			projection;
     u64             settings;
 } Viewport;
 

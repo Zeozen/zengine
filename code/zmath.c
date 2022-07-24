@@ -645,6 +645,25 @@ mesh* CreateMesh(tri* tris, i32 num)
 	return new_mesh;
 }
 
+
+void MultiplyMatrixVector(vec* v_in, vec* v_out, mat4x4* m)
+{
+	v_out->x = v_in->x * m->m[0][0] + v_in->y * m->m[1][0] + v_in->z * m->m[2][0] + m->m[3][0];
+	v_out->y = v_in->x * m->m[0][1] + v_in->y * m->m[1][1] + v_in->z * m->m[2][1] + m->m[3][1];
+	v_out->z = v_in->x * m->m[0][2] + v_in->y * m->m[1][2] + v_in->z * m->m[2][2] + m->m[3][2];
+	r32 w 	 = v_in->x * m->m[0][3] + v_in->y * m->m[1][3] + v_in->z * m->m[2][3] + m->m[3][3];
+
+	if (w != 0.f)
+	{
+		v_out->x = v_out->x / w;
+		v_out->y = v_out->y / w;
+		v_out->z = v_out->z / w;
+	}
+}
+
+
+
+
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^ VECTOR 3D END ^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 
 /*~~~~~~~~~~~~~~~~~~~~ HELPERS BEGIN ~~~~~~~~~~~~~~~~~~~~*/

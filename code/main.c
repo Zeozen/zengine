@@ -106,7 +106,7 @@ void mainloop(void *arg)
 
 /*	exit and cleanup current state	*/
 #if DEBUGPRNT
-printf("Game exiting state \t%s...\n", GetGamestateName(z->gamestate_now));
+printf("\nGame exiting state \t%s...", GetGamestateName(z->gamestate_now));
 #endif
 	        		switch (z->gamestate_now) 
 	        		{
@@ -135,7 +135,7 @@ printf("Game exiting state \t%s...\n", GetGamestateName(z->gamestate_now));
 
 /*	enter and setup next state	*/
 #if DEBUGPRNT
-printf("Game entering state \t%s...\n", GetGamestateName(z->gamestate_new));
+printf("\nGame entering state \t%s...", GetGamestateName(z->gamestate_new));
 #endif
 	        		switch (z->gamestate_new) 
 	        		{
@@ -162,7 +162,7 @@ printf("Game entering state \t%s...\n", GetGamestateName(z->gamestate_new));
 						break;
 	        		}
 #if DEBUGPRNT
-printf("Gamestate change complete.\n");
+printf("\nGamestate change complete.");
 #endif
 					z->gamestate_now = z->gamestate_new;
 					z->t_0_gamestate_change = t;
@@ -171,7 +171,7 @@ printf("Gamestate change complete.\n");
 	    		{
 					z->gamestate_old = z->gamestate_now;
 #if DEBUGPRNT
-printf("Gamestate change from %s \tto %s was deemed illegal!\n", GetGamestateName(z->gamestate_now), GetGamestateName(z->gamestate_new));
+printf("\nGamestate change from %s \tto %s was deemed illegal!", GetGamestateName(z->gamestate_now), GetGamestateName(z->gamestate_new));
 #endif
 	    		}
 			}
@@ -220,8 +220,11 @@ printf("Gamestate change from %s \tto %s was deemed illegal!\n", GetGamestateNam
 int main(int argc, char* argv[])
 {
 /*vvvvvvvvvvvvvvvvvvvvvvvvvv INIT vvvvvvvvvvvvvvvvvvvvvvvvvv*/
+#if DEBUGPRNT
+printf("\n~~~Initializing zengine!~~~");
+#endif		
 	SetupSDL();
-	Viewport* viewport = CreateViewport("ZENGINE");
+	Viewport* viewport = CreateViewport("ZENGINE"); //@TODO: display splashscreen/loading screen as soon as possible after creating viewport
 	Game* game = CreateGame();
 	Controller* controller = CreateController();
 	Input* input = CreateInputManager();
@@ -266,10 +269,13 @@ int main(int argc, char* argv[])
     z->render[GAMESTATE_EDIT] = &RenderEdit;
     z->render[GAMESTATE_EXIT] = &RenderExit;
 
-
+printf("\n~~~Zengine Initialized!~~~");
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^ INIT ^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 
 /*vvvvvvvvvvvvvvvvvvvvvvvvvv LOAD ASSETS vvvvvvvvvvvvvvvvvvvvvvvvvv*/
+#if DEBUGPRNT
+printf("\n\n~~~Loading all the assets!~~~");
+#endif	
 LoadTexture(assets, T_UI_ATLAS, viewport->renderer, T_UI_ATLAS_PATH);
 LoadTexture(assets, T_PLAYER_CURSOR, viewport->renderer, T_PLAYER_CURSOR_PATH);
 
@@ -347,6 +353,7 @@ cube_tris[11].vert[2] = h;
 
 assets->msh[0] = CreateMesh(cube_tris, 12);
 
+printf("\n~~~Finished loading assets!~~~");
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^ LOAD ASSETS ^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 
 SetCursor(viewport, assets, CUR_POINT);
@@ -358,9 +365,10 @@ RefreshCursors(z->viewport, z->assets);
 
 
 
-
-
 /*vvvvvvvvvvvvvvvvvvvvvvvvvv MAIN LOOP vvvvvvvvvvvvvvvvvvvvvvvvvv*/
+#if DEBUGPRNT
+printf("\n\n~~~Firing up the main loop!~~~");
+#endif	
 #ifdef __EMSCRIPTEN__
 	emscripten_set_main_loop_arg(mainloop, z, -1, 1);
 #else
@@ -370,7 +378,7 @@ RefreshCursors(z->viewport, z->assets);
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^ MAIN LOOP ^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 
 #if DEBUGPRNT
-printf("\n~~~Exiting game!~~~\n");
+printf("\n\n~~~Exiting game!~~~");
 #endif		
 	// free all things
 	FreeParticles(particles);

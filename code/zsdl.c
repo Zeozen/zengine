@@ -2,12 +2,12 @@
 #include "zsdl.h"
 #include "ini.h"
 
-
+//@TODO: use sdl_log instead of printf maybe? It might be more portable.
 b8 SetupSDL()
 {
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER) < 0)
 	{
-		printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
+		printf("\nSDL could not initialize! SDL_Error: %s", SDL_GetError());
 		return 0;
 	}
 	else
@@ -17,8 +17,8 @@ b8 SetupSDL()
 		int initted = IMG_Init(flags);
 		if ((initted & flags) != flags)
 		{
-			printf("IMG_Init: Failed to init PNG support!\n");
-			printf("IMG_Init: %s\n", IMG_GetError());
+			printf("\nIMG_Init: Failed to init PNG support!");
+			printf("\nIMG_Init: %s", IMG_GetError());
 		}
 
 //init SDL_Mixer
@@ -48,12 +48,12 @@ Viewport* CreateViewport(const char* window_title)
 	viewport->screen = (SDL_Rect){0, 0, ZSDL_INTERNAL_WIDTH*pixel_size_web, ZSDL_INTERNAL_HEIGHT*pixel_size_web};
 	SET8IN64(pixel_size_web, &viewport->settings, ZSDL_SETTINGS_BYTE_PIXELSCALE);
 	#else
-	u8 pixel_size_desktop_default = 3;
+	u8 pixel_size_desktop_default = ZSDL_PIXEL_SIZE_DESKTOP_DEFAULT;
 	viewport->screen = (SDL_Rect){0, 0, ZSDL_INTERNAL_WIDTH * pixel_size_desktop_default, ZSDL_INTERNAL_HEIGHT * pixel_size_desktop_default};
 	SET8IN64(pixel_size_desktop_default, &viewport->settings, ZSDL_SETTINGS_BYTE_PIXELSCALE);
 	#endif
 #ifdef DEBUGPRNT
-	printf("Initialising zSDL viewport...\n");
+	printf("\nInitialising zSDL viewport...");
 #endif
 	viewport->window =
 		SDL_CreateWindow(window_title, SDL_WINDOWPOS_CENTERED_DISPLAY(0), SDL_WINDOWPOS_CENTERED_DISPLAY(0),
@@ -109,22 +109,46 @@ Viewport* CreateViewport(const char* window_title)
 									  ZSDL_INTERNAL_WIDTH, ZSDL_INTERNAL_HEIGHT);
 				if (viewport->render_layer[i] == NULL)
 				{
-					printf("render layer %d could not be created! SDL Error: %s\n", i, SDL_GetError());
+					printf("\nRender layer %d could not be created! SDL Error: %s", i, SDL_GetError());
 					return 0;
 				}
 				else
 				{
-					printf("render layer %d successfully created!\n", i);
+					printf("\nRender layer %d successfully created!", i);
 					SDL_SetTextureBlendMode(viewport->render_layer[i], SDL_BLENDMODE_BLEND);
 				}
 			}
+
+			//setup projection matrix
+			viewport->projection = malloc(sizeof(mat4x4));
+			for (i32 v = 0; v < 4; v++)
+			{
+				for (i32 u = 0; u < 4; u++)
+				{
+					viewport->projection->m[u][v] = 0.f;		
+				}
+			}
+
+			//projection defaults
+			r32 near_plane	 = 0.1f;
+			r32 far_plane	 = 1000.f;
+			r32 fov			 = 90.f;
+			r32 aspect_ratio = (r32)ZSDL_INTERNAL_HEIGHT / (r32)ZSDL_INTERNAL_WIDTH;
+			r32 fov_rad		 = 1.f / tanf(fov * 0.5f / 180.f * ZPI);
+			r32 q			 = far_plane / (far_plane - near_plane);
+
+			viewport->projection->m[0][0] = aspect_ratio * fov_rad;
+			viewport->projection->m[1][1] = fov_rad;
+			viewport->projection->m[2][2] = q;
+			viewport->projection->m[3][2] = -1.f * near_plane * q;
+			viewport->projection->m[2][3] = 1;
 		}
 	}
 
 	if (viewport != NULL)
-		printf("zSDL viewport initialised!\n");
+		printf("\nzSDL viewport initialised!");
 	else
-		printf("viewport NOT initialised!\n");
+		printf("\nzSDL viewport failed to initialize!");
 	return viewport;
 }
 
@@ -139,8 +163,10 @@ void FreeViewport(Viewport* viewport)
 	SDL_DestroyRenderer(viewport->renderer);
 	if (viewport->camera != NULL)
 		free(viewport->camera);
+	if(viewport->projection != NULL)
+		free(viewport->projection);
 	free(viewport);
-	printf("Viewport freed.\n");
+	printf("\nViewport freed.");
 	viewport = NULL;
 }
 
@@ -149,14 +175,14 @@ void FreeViewport(Viewport* viewport)
 
 Assets* CreateAssets(Viewport* viewport)
 {
-	printf("initializing assets...\n");
+	printf("\nInitializing assets...");
     Assets* assets = malloc(sizeof(Assets));
 	memset(assets, 0, sizeof(Assets));
 
 	if (assets == NULL)
-		printf("failed to init assets!\n");
+		printf("\nFailed to init assets!");
 	else
-		printf("assets initialized\n");
+		printf("\nAssets initialized.");
 	return assets;
 }
 
@@ -238,7 +264,7 @@ void FreeAssets(Assets* assets)
 	}
 
     free(assets);
-	printf("assets freed\n");
+	printf("\nAssets freed.");
 }
 
 
@@ -538,9 +564,9 @@ Input* CreateInputManager()
 		
 
 	if (input != NULL)
-		printf("input manager initialized.\n");
+		printf("\nInput manager initialized.");
 	else
-		printf("input manager failed to initialize!\n");
+		printf("\nInput manager failed to initialize!");
 	return input;
 }
 
@@ -558,7 +584,7 @@ void FreeInputManager(Input* input)
 		}	
 	}
 	free(input);
-	printf("Input freed.");
+	printf("\nInput freed.");
 }
 
 void AddPlayer(Input* input)
@@ -712,7 +738,7 @@ void TickInput(Input* input)
 
 Controller* CreateController()
 {
-	printf("initializing Controller...\n");
+	printf("\nInitializing Controller...");
     Controller* controller = (Controller*)malloc(sizeof(Controller));
 
 	controller->actions = 0;
@@ -720,16 +746,16 @@ Controller* CreateController()
 	controller->move_vector = ZERO_I2;
 
 	if (controller != NULL)
-		printf("Controller initialized.\n");
+		printf("\nController initialized.");
 	else
-		printf("Controller failed to initialise!\n");
+		printf("\nController failed to initialise!");
 	return controller;
 }
 
 void FreeController(Controller* controller)
 {
 	free(controller);
-	printf("controller freed.\n");
+	printf("\nController freed.");
 }
 
 void CollectInput(Controller* c)
@@ -817,9 +843,9 @@ Particles* InitParticles()
 	Particles* particles = malloc(sizeof(Particles));
 	memset(particles, 0, sizeof(Particles));
 	if (particles != NULL)
-		printf("particles initialized.\n");
+		printf("\nParticles initialized.");
 	else
-		printf("particles could not be initialized!\n");
+		printf("\nParticles could not be initialized!");
 	return particles;
 }
 
@@ -965,11 +991,11 @@ void FreeParticles(Particles* p)
 	{
 		free(p);
 		p = NULL;
-		printf("FreeParticles(): Particles freed.\n");
+		printf("\nFreeParticles(): Particles freed.");
 	}
 	else
 	{
-		printf("FreeParticles(): Particles already NULL.\n");
+		printf("\nFreeParticles(): Particles already NULL.");
 	}
 }
 
@@ -1040,7 +1066,7 @@ r2 CamToPos( i2 cam, Viewport* viewport)
 /*vvvvvvvvvvvvvvvvvvvvvvvvvv GUI vvvvvvvvvvvvvvvvvvvvvvvvvv*/
 Menu CreateMenu(const char* config_section)
 {
-	printf("initializing menu from section %s.\n", config_section);
+	printf("\nInitializing menu from section %s...", config_section);
     Menu menu;// = malloc(sizeof(Menu));
 
 	//setup ini design to read data from section
@@ -1306,7 +1332,7 @@ void FreeMenus(Menu* menus)
 		free(menus);
 		menus = NULL;
 	}
-	printf("Menus freed.\n");
+	printf("\nMenus freed.");
 }
 
 

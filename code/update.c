@@ -5,7 +5,7 @@
 /*-------------------------------------------------*/
 i32 UpdateInit    (u32 t, r32 dt, void* engine)
 {
-    zEngine* z = (zEngine*)engine;
+    //zEngine* z = (zEngine*)engine;
 
     return GAMESTATE_MAIN;
 }
@@ -118,10 +118,9 @@ i32 UpdateOptions (u32 t, r32 dt, void* engine)
 {
     zEngine* z = (zEngine*)engine;
     i2 mloc = MouseLocation(z->controller, z->viewport);
-    r2 mpos = CamToPos(mloc, z->viewport);
+    //r2 mpos = CamToPos(mloc, z->viewport);
 
 
-    //}
 
 
     static u32 submenu_active = BTN_OPTS_VIDEO;
@@ -201,7 +200,7 @@ i32 UpdateOptions (u32 t, r32 dt, void* engine)
 /*-------------------------------------------------*/
 i32 UpdatePlay    (u32 t, r32 dt, void* engine)
 {
-    zEngine* z = (zEngine*)engine;
+    //zEngine* z = (zEngine*)engine;
 
 
 
@@ -211,7 +210,7 @@ i32 UpdatePlay    (u32 t, r32 dt, void* engine)
 /*-------------------------------------------------*/
 i32 UpdateEvent   (u32 t, r32 dt, void* engine)
 {
-    zEngine* z = (zEngine*)engine;
+    //zEngine* z = (zEngine*)engine;
 
     return GAMESTATE_EXIT;
 }
@@ -219,7 +218,7 @@ i32 UpdateEvent   (u32 t, r32 dt, void* engine)
 /*-------------------------------------------------*/
 i32 UpdateLose    (u32 t, r32 dt, void* engine)
 {
-    zEngine* z = (zEngine*)engine;
+    //zEngine* z = (zEngine*)engine;
 
     return GAMESTATE_EXIT;
 }
@@ -227,7 +226,7 @@ i32 UpdateLose    (u32 t, r32 dt, void* engine)
 /*-------------------------------------------------*/
 i32 UpdateGoal    (u32 t, r32 dt, void* engine)
 {
-    zEngine* z = (zEngine*)engine;
+    //zEngine* z = (zEngine*)engine;
 
     return GAMESTATE_EXIT;
 }
@@ -235,7 +234,7 @@ i32 UpdateGoal    (u32 t, r32 dt, void* engine)
 /*-------------------------------------------------*/
 i32 UpdateEdit    (u32 t, r32 dt, void* engine)
 {
-    zEngine* z = (zEngine*)engine;
+    //zEngine* z = (zEngine*)engine;
 
     return GAMESTATE_EXIT;
 }
@@ -243,7 +242,7 @@ i32 UpdateEdit    (u32 t, r32 dt, void* engine)
 /*-------------------------------------------------*/
 i32 UpdateExit    (u32 t, r32 dt, void* engine)
 {
-    zEngine* z = (zEngine*)engine;
+    //zEngine* z = (zEngine*)engine;
 
     return GAMESTATE_EXIT;
 }
